@@ -3,34 +3,30 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main   # change branch if needed
+      - main   # change branch name if needed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy on Server
+      - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
             if [ ! -d /var/www/react/.git ]; then
-              echo 'Cloning repo...'
-              sudo rm -rf /var/www/react
+              echo 'Repo not found. Cloning...'
               sudo git clone https://github.com/premnathait1281-cloud/frontend.git /var/www/react
             else
-              echo 'Repo exists, pulling latest changes...'
+              echo 'Repo exists. Pulling latest changes...'
               cd /var/www/react && sudo git reset --hard && sudo git pull
             fi
 
-            # Set permissions
+            # Fix permissions
             sudo chown -R www-data:www-data /var/www/react
           "
 
