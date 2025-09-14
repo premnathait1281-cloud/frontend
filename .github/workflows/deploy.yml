@@ -3,7 +3,7 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main   # change branch name if needed
+      - main   # change branch if needed
 
 jobs:
   deploy:
@@ -20,13 +20,18 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
             if [ ! -d /var/www/react/.git ]; then
               echo 'Repo not found. Cloning...'
+              sudo rm -rf /var/www/react
               sudo git clone https://github.com/premnathait1281-cloud/frontend.git /var/www/react
             else
               echo 'Repo exists. Pulling latest changes...'
-              cd /var/www/react && sudo git reset --hard && sudo git pull
+              cd /var/www/react
+              # Mark directory as safe for git
+              sudo git config --global --add safe.directory /var/www/react
+              sudo git reset --hard
+              sudo git pull
             fi
 
-            # Fix permissions
+            # Ensure correct permissions for Nginx
             sudo chown -R www-data:www-data /var/www/react
           "
 
