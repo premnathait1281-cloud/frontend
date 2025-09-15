@@ -1,1 +1,50 @@
-<h1>Welcome to React App in ubuntu</h1>
+import React, { useState } from "react";
+
+function App() {
+  const [products] = useState([
+    { id: 1, name: "Laptop", price: 60000 },
+    { id: 2, name: "Phone", price: 25000 },
+    { id: 3, name: "Headphones", price: 3000 },
+  ]);
+
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.heading}>My Product Store</h1>
+      <ul style={styles.list}>
+        {products.map((p) => (
+          <li key={p.id} style={styles.item}>
+            <span>{p.name}</span>
+            <span>₹{p.price}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    fontFamily: "Arial, sans-serif",
+    padding: "20px",
+    textAlign: "center",
+  },
+  heading: {
+    color: "#333",
+  },
+  list: {
+    listStyle: "none",
+    padding: 0,
+  },
+  item: {
+    display: "flex",
+    justifyContent: "space-between",
+    margin: "10px auto",
+    padding: "10px",
+    width: "300px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+  },
+};
+
+export default App;
+
