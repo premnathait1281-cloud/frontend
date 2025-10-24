@@ -1,50 +1,41 @@
-name: Deploy Frontend
+name: Deploy Node.js App to EC2 with PM2
 
 on:
   push:
     branches:
-      - main   # Change if your main branch is different
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout (optional if you need workflow files)
-      - name: Checkout Repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Step 2: Setup SSH agent with private key from secrets
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Step 3: Deploy frontend to EC2
-      - name: Deploy to Server
+      - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-            FRONTEND_DIR=/var/www/react
-
-            if [ ! -d \$FRONTEND_DIR/.git ]; then
-              echo 'Repo not found. Cloning...'
-              sudo rm -rf \$FRONTEND_DIR
-              sudo git clone git@github.com:premnathait1281-cloud/new-autodeploy1.git \$FRONTEND_DIR
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            set -e
+            cd ~
+            if [ ! -d "backend" ]; then
+              git clone https://github.com/premnathait1281-cloud/backend.git
+              cd backend
             else
-              echo 'Repo exists. Pulling latest changes...'
-              cd \$FRONTEND_DIR
-              sudo git config --global --add safe.directory \$FRONTEND_DIR
-              sudo git reset --hard
-              sudo git pull
+              cd backend
+              git fetch origin
+              git reset --hard origin/main
             fi
-
-            # Ensure correct permissions for Nginx
-            sudo chown -R www-data:www-data \$FRONTEND_DIR
-          "
-
-      # Step 4: Restart Nginx
-      - name: Restart Nginx
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-            sudo systemctl restart nginx
-          "
+            npm install --production
+            if pm2 describe backend > /dev/null; then
+              pm2 restart backend
+            else
+              pm2 start npm --name "backend" -- run start
+            fi
+            pm2 save
+          EOF
